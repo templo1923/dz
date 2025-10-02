@@ -28,7 +28,7 @@ app.post('/api/generar-comprobante', async (req, res) => {
         const referencia = `M${Math.floor(Math.random() * 9000000) + 1000000}`;
 
         // --- Lógica para crear la imagen del Comprobante ---
-        const plantillaComprobante = path.join(__dirname, 'templates', 'comprobante_base.png');
+        const plantillaComprobante = path.join(process.cwd(), 'public', 'templates', 'comprobante_base.png');
         const font = await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK); // Cargamos una fuente
         
         const image = await Jimp.read(plantillaComprobante);
@@ -70,3 +70,4 @@ app.post('/api/generar-comprobante', async (req, res) => {
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
+
