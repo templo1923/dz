@@ -3,6 +3,10 @@
     {
       "source": "/api/:path*",
       "destination": "https://nequidz.mooo.com/api/:path*"
+    },
+    {
+      "source": "/static/:path*",
+      "destination": "https://nequidz.mooo.com/static/:path*"
     }
   ]
 }
