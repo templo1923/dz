@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprobante</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000; /* Fondo negro para evitar espacios blancos */
+        }
+        
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+        
+        .image-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .comprobante-img {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Cubre todo el espacio disponible */
+            object-position: center; /* Centra la imagen */
+            touch-action: manipulation; /* Mejora la experiencia táctil */
+        }
+        
+        /* Para dispositivos más pequeños, aseguramos que la imagen se muestre completa */
+        @media (max-aspect-ratio: 9/16) {
+            .comprobante-img {
+                width: 100%;
+                height: auto;
+            }
+        }
+        
+        /* Para dispositivos más anchos, aseguramos que la imagen cubra todo el alto */
+        @media (min-aspect-ratio: 9/16) {
+            .comprobante-img {
+                width: auto;
+                height: 100%;
+            }
+        }
+        
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #000;
+            z-index: 100;
+        }
+        
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #E84B9F;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            color: #ff4d4f;
+            background-color: #fff1f0;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ffccc7;
+            text-align: center;
+            max-width: 80%;
+            z-index: 50;
+        }
+        
+        .action-button {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #E84B9F;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            z-index: 50;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div id="loading" class="loading">
+        <div class="loading-spinner"></div>
+    </div>
+    
+    <div class="image-container">
+        <img id="comprobanteImage" class="comprobante-img" src="/placeholder.svg" alt="Comprobante">
+    </div>
+    
+    <div id="error-container" class="error-message" style="display: none;"></div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const imagenUrl = params.get('imagen');
+        const referencia = params.get('referencia');
+        const comprobanteImage = document.getElementById('comprobanteImage');
+        const loading = document.getElementById('loading');
+        const errorContainer = document.getElementById('error-container');
+        
+        function mostrarError(mensaje) {
+            loading.style.display = 'none';
+            comprobanteImage.style.display = 'none';
+            errorContainer.textContent = mensaje;
+            errorContainer.style.display = 'block';
+        }
+        
+        comprobanteImage.addEventListener('click', function() {
+            const imagenMovimientos = new URLSearchParams(window.location.search).get('movimientos');
+            const referencia = new URLSearchParams(window.location.search).get('referencia');
+            
+            let destino = 'inicio.html';
+            if (imagenMovimientos && referencia) {
+                destino += `?imagen=${encodeURIComponent(imagenMovimientos)}&referencia=${referencia}`;
+            }
+            window.location.href = destino;
+        });
+        
+        if (imagenUrl) {
+            const fetchOptions = {
+                headers: {
+                    'Origin': 'https://nequidz2.netlify.app'
+                }
+            };
+            
+            comprobanteImage.onload = function() {
+                loading.style.display = 'none';
+                
+                // Ajustar la imagen después de cargar
+                ajustarImagen();
+            };
+            
+            comprobanteImage.onerror = function() {
+                mostrarError('No se pudo cargar la imagen del comprobante. Por favor, vuelve a intentarlo.');
+            };
+            
+            comprobanteImage.src = imagenUrl;
+            
+            setTimeout(() => {
+                if (loading.style.display !== 'none') {
+                    mostrarError('Tiempo de espera agotado. No se pudo cargar la imagen del comprobante.');
+                }
+            }, 10000);
+        } else {
+            mostrarError('No se especificó una imagen de comprobante válida.');
+        }
+        
+        // Función para ajustar la imagen al tamaño de la pantalla
+        function ajustarImagen() {
+            const img = comprobanteImage;
+            const container = document.querySelector('.image-container');
+            
+            // Obtener dimensiones
+            const imgRatio = img.naturalWidth / img.naturalHeight;
+            const containerRatio = container.clientWidth / container.clientHeight;
+            
+            if (imgRatio > containerRatio) {
+                // La imagen es más ancha que el contenedor
+                img.style.width = '100%';
+                img.style.height = 'auto';
+            } else {
+                // La imagen es más alta que el contenedor
+                img.style.width = 'auto';
+                img.style.height = '100%';
+            }
+        }
+        
+        // Ajustar la imagen cuando cambie el tamaño de la ventana
+        window.addEventListener('resize', ajustarImagen);
+        
+        // Prevenir zoom en dispositivos móviles
+        document.addEventListener('touchstart', function(e) {
+            if (e.touches.length > 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        document.addEventListener('touchmove', function(e) {
+            if (e.scale !== 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // Botón de compartir
+        if (navigator.share) {
+            const btnCompartir = document.createElement('button');
+            btnCompartir.className = 'action-button';
+            btnCompartir.textContent = 'Compartir';
+            
+            btnCompartir.addEventListener('click', async () => {
+                try {
+                    const response = await fetch(imagenUrl);
+                    const blob = await response.blob();
+                    const file = new File([blob], `Comprobante_${referencia || 'Nequi'}.jpg`, { type: 'image/jpeg' });
+                    
+                    await navigator.share({
+                        title: 'Comprobante de pago',
+                        text: `Comprobante de pago Nequi - Referencia: ${referencia || ''}`,
+                        files: [file]
+                    });
+                } catch (error) {
+                    navigator.share({
+                        title: 'Comprobante de pago',
+                        text: `Comprobante de pago Nequi - Referencia: ${referencia || ''}`,
+                        url: window.location.href
+                    }).catch(e => {});
+                }
+            });
+            document.body.appendChild(btnCompartir);
+        }
+    </script>
+</body>
+</html>

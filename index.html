@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Envía plata</title>
+    <style>
+        :root {
+            --primary: #E84B9F;
+            --primary-light: #F495C7;
+            --dark-purple: #280D2D;
+            --text: #333;
+            --light-bg: #F7F7F7;
+            --white: #FFFFFF;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+        body {
+            background-color: var(--white);
+            color: var(--text);
+        }
+        .app-container {
+            max-width: 450px;
+            margin: 0 auto;
+            min-height: 100vh;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        .nav-bar {
+            padding: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .back-button, .menu-button {
+            width: 24px;
+            height: 24px;
+            border: none;
+            background: none;
+            cursor: pointer;
+        }
+        .title {
+            padding: 16px 20px;
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .form-content {
+            flex: 1;
+            padding: 0 16px;
+        }
+        .input-field {
+            background-color: var(--light-bg);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            position: relative;
+        }
+        .input-field input {
+            width: 100%;
+            padding: 16px 20px;
+            border: none;
+            background: transparent;
+            font-size: 16px;
+            outline: none;
+        }
+        .input-field input:invalid {
+            border: 2px solid #ff4d4f;
+        }
+        .contact-icon {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary);
+        }
+        .helper-text {
+            color: #666;
+            font-size: 14px;
+            margin: -8px 0 16px 4px;
+        }
+        .validation-text {
+            color: #ff4d4f;
+            font-size: 12px;
+            margin-top: -12px;
+            margin-bottom: 8px;
+            margin-left: 4px;
+            display: none;
+        }
+        .section-title {
+            color: var(--primary);
+            font-size: 18px;
+            font-weight: 600;
+            margin: 24px 0 16px 4px;
+        }
+        .payment-option {
+            background-color: var(--white);
+            border: 1px solid #EEE;
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+        }
+        .option-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .option-icon {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .option-icon img {
+            width: 100%;
+            height: auto;
+        }
+        .textarea-field {
+            height: 120px;
+            position: relative;
+        }
+        .textarea-field .static-text {
+            width: 100%;
+            height: 100%;
+            padding: 16px 20px;
+            font-size: 16px;
+            color: #666;
+            display: flex;
+            align-items: center;
+        }
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            color: white;
+            font-size: 18px;
+        }
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error-message {
+            color: #ff4d4f;
+            margin-top: 8px;
+            font-size: 14px;
+            padding: 12px;
+            background-color: #fff1f0;
+            border-radius: 8px;
+            border: 1px solid #ffccc7;
+        }
+        .footer {
+            margin-top: auto;
+            padding: 16px;
+        }
+        .action-button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 16px;
+            width: 100%;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .action-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .retry-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-top: 15px;
+            cursor: pointer;
+        }
+        .status-message {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        .receipt-type-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .receipt-type-option {
+            flex: 1;
+            background-color: var(--light-bg);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .receipt-type-option.selected {
+            border-color: var(--primary);
+            background-color: rgba(232, 75, 159, 0.1);
+        }
+        .receipt-type-option:hover {
+            background-color: rgba(232, 75, 159, 0.05);
+        }
+        .rate-limit-warning {
+            background-color: #fff7e6;
+            border: 1px solid #ffd591;
+            color: #d46b08;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="nav-bar">
+            <button class="back-button">
+                <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+            </button>
+            <button class="menu-button">
+                <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none">
+                    <path d="M6 9l6 6 6-6"/>
+                </svg>
+            </button>
+        </div>
+        
+        <h1 class="title">Envía plata</h1>
+        
+        <div class="form-content">
+            <div id="rate-limit-warning" class="rate-limit-warning">
+                Has alcanzado el límite de solicitudes. Espera un momento antes de intentar de nuevo.
+            </div>
+            
+            <h2 class="section-title">Tipo de comprobante</h2>
+            <div class="receipt-type-selector">
+                <div class="receipt-type-option selected" data-type="normal">
+                    Comprobante normal
+                </div>
+                <div class="receipt-type-option" data-type="qr">
+                    Comprobante QR
+                </div>
+            </div>
+            
+            <div id="normal-fields">
+                <div class="input-field">
+                    <input type="text" id="nombre" placeholder="Nombre completo..." required minlength="3" maxlength="50">
+                </div>
+                <div id="nombre-validation" class="validation-text">El nombre debe tener entre 3 y 50 caracteres y solo contener letras</div>
+                
+                <div class="input-field">
+                    <input type="tel" id="numero" placeholder="Número celular (10 dígitos)" required pattern="[3][0-9]{9}">
+                    <div class="contact-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="12" cy="7" r="4"/>
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        </svg>
+                    </div>
+                </div>
+                <div id="numero-validation" class="validation-text">Ingresa un número colombiano válido (10 dígitos, iniciando con 3)</div>
+                
+                <p class="helper-text">Revisa bien el número para enviarle a la persona correcta</p>
+            </div>
+            
+            <div id="qr-fields" style="display: none;">
+                <div class="input-field">
+                    <input type="text" id="nombre-negocio" placeholder="Nombre del negocio..." required minlength="3" maxlength="50">
+                </div>
+                <div id="negocio-validation" class="validation-text">El nombre debe tener entre 3 y 50 caracteres y solo contener letras</div>
+            </div>
+            
+            <div class="input-field">
+                <input type="number" id="cuanto" placeholder="¿Cuánto? (Máx: $50,000,000,000)" required min="1" max="50000000000" step="0.01">
+            </div>
+            <div id="cuanto-validation" class="validation-text">Ingresa un valor entre $1 y $50,000,000,000</div>
+            
+            <div class="input-field textarea-field">
+                <div class="static-text">Disponible</div>
+            </div>
+            
+            <div id="error-container" class="error-message" style="display: none;"></div>
+            
+            <h2 class="section-title">Escoge de donde saldrá la plata</h2>
+            
+            <div class="payment-option">
+                <div class="option-left">
+                    <div class="option-icon">
+                        <img src="https://i.postimg.cc/3dJsngKw/image.png" alt="Disponible">
+                    </div>
+                    <span class="option-text">Disponible</span>
+                </div>
+                <div class="chevron-right">
+                    <svg width="24" height="24" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" fill="none">
+                        <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <button class="action-button" id="btnSigue">Sigue</button>
+        </div>
+    </div>
+
+    <div id="loading" class="loading" style="display: none;">
+        <div class="loading-spinner"></div>
+        <span id="loading-text">Generando comprobante...</span>
+        <button id="btnCancelar" class="retry-button" style="display: none;">Cancelar</button>
+        <div id="status-message" class="status-message"></div>
+    </div>
+
+    <script>
+        const API_URL = "https://nequidz.mooo.com";
+        const MAX_RETRIES = 2;
+        const RETRY_DELAY = 3000;
+        const REQUEST_TIMEOUT = 30000;
+        
+        const SECURITY_CONFIG = {
+            MIN_NAME_LENGTH: 3,
+            MAX_NAME_LENGTH: 50,
+            MAX_AMOUNT: 50000000000,
+            MIN_AMOUNT: 1,
+            PHONE_REGEX: /^[3][0-9]{9}$/,
+            NAME_REGEX: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/,
+            AMOUNT_REGEX: /^[0-9]+(\.[0-9]{1,2})?$/,
+            MAX_REQUESTS_PER_MINUTE: 5,
+            BLOCKED_WORDS: ['test', 'prueba', 'admin', 'null', 'undefined', 'script', 'drop', 'select']
+        };
+        
+        let requestCount = 0;
+        let lastRequestTime = 0;
+        let blockedUntil = 0;
+        
+        const btnSigue = document.getElementById('btnSigue');
+        const btnCancelar = document.getElementById('btnCancelar');
+        const loadingText = document.getElementById('loading-text');
+        const statusMessage = document.getElementById('status-message');
+        
+        let currentRetry = 0;
+        let abortController = null;
+        let receiptType = "normal";
+
+        const receiptOptions = document.querySelectorAll('.receipt-type-option');
+        const normalFields = document.getElementById('normal-fields');
+        const qrFields = document.getElementById('qr-fields');
+
+        function sanitizeInput(input) {
+            if (typeof input !== 'string') return '';
+            return input.trim()
+                       .replace(/[<>\"']/g, '')
+                       .substring(0, SECURITY_CONFIG.MAX_NAME_LENGTH);
+        }
+
+        function validateColombianPhone(phone) {
+            const cleanPhone = phone.replace(/\s+/g, '');
+            if (!SECURITY_CONFIG.PHONE_REGEX.test(cleanPhone)) {
+                return { valid: false, message: 'Ingresa un número de teléfono colombiano válido (10 dígitos, iniciando con 3)' };
+            }
+            return { valid: true, formatted: cleanPhone };
+        }
+
+        function validateName(name) {
+            const sanitized = sanitizeInput(name);
+            
+            if (sanitized.length < SECURITY_CONFIG.MIN_NAME_LENGTH) {
+                return { valid: false, message: `El nombre debe tener al menos ${SECURITY_CONFIG.MIN_NAME_LENGTH} caracteres` };
+            }
+            
+            if (sanitized.length > SECURITY_CONFIG.MAX_NAME_LENGTH) {
+                return { valid: false, message: `El nombre no puede exceder ${SECURITY_CONFIG.MAX_NAME_LENGTH} caracteres` };
+            }
+            
+            if (!SECURITY_CONFIG.NAME_REGEX.test(sanitized)) {
+                return { valid: false, message: 'El nombre solo puede contener letras y espacios' };
+            }
+            
+            const lowerName = sanitized.toLowerCase();
+            for (const word of SECURITY_CONFIG.BLOCKED_WORDS) {
+                if (lowerName.includes(word)) {
+                    return { valid: false, message: 'El nombre contiene caracteres no permitidos' };
+                }
+            }
+            
+            return { valid: true, sanitized };
+        }
+
+        function validateAmount(amount) {
+            const cleanAmount = amount.toString().replace(/[^0-9.]/g, '');
+            
+            if (!SECURITY_CONFIG.AMOUNT_REGEX.test(cleanAmount)) {
+                return { valid: false, message: 'Ingresa un valor numérico válido' };
+            }
+            
+            const numericAmount = parseFloat(cleanAmount);
+            
+            if (isNaN(numericAmount) || numericAmount < SECURITY_CONFIG.MIN_AMOUNT) {
+                return { valid: false, message: `El valor mínimo es $${SECURITY_CONFIG.MIN_AMOUNT}` };
+            }
+            
+            if (numericAmount > SECURITY_CONFIG.MAX_AMOUNT) {
+                return { valid: false, message: `El valor máximo es $${SECURITY_CONFIG.MAX_AMOUNT.toLocaleString()}` };
+            }
+            
+            return { valid: true, amount: numericAmount };
+        }
+
+        function checkRateLimit() {
+            const now = Date.now();
+            
+            if (now < blockedUntil) {
+                const remainingTime = Math.ceil((blockedUntil - now) / 1000);
+                return { allowed: false, message: `Demasiadas solicitudes. Espera ${remainingTime} segundos.` };
+            }
+            
+            if (now - lastRequestTime < 60000) {
+                requestCount++;
+            } else {
+                requestCount = 1;
+            }
+            
+            lastRequestTime = now;
+            
+            if (requestCount > SECURITY_CONFIG.MAX_REQUESTS_PER_MINUTE) {
+                blockedUntil = now + (2 * 60 * 1000);
+                return { allowed: false, message: 'Límite de solicitudes excedido. Espera 2 minutos.' };
+            }
+            
+            return { allowed: true };
+        }
+
+        function formatPhoneDisplay(phone) {
+            const clean = phone.replace(/\s+/g, '');
+            if (clean.length === 10) {
+                return `${clean.slice(0, 3)} ${clean.slice(3, 6)} ${clean.slice(6)}`;
+            }
+            return phone;
+        }
+
+        function showValidationError(inputId, message) {
+            const validationDiv = document.getElementById(inputId + '-validation');
+            if (validationDiv) {
+                validationDiv.textContent = message;
+                validationDiv.style.display = 'block';
+            }
+        }
+
+        function hideValidationError(inputId) {
+            const validationDiv = document.getElementById(inputId + '-validation');
+            if (validationDiv) {
+                validationDiv.style.display = 'none';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const numeroInput = document.getElementById('numero');
+            const nombreInput = document.getElementById('nombre');
+            const nombreNegocioInput = document.getElementById('nombre-negocio');
+            const cuantoInput = document.getElementById('cuanto');
+
+            if (numeroInput) {
+                numeroInput.addEventListener('input', function(e) {
+                    const validation = validateColombianPhone(e.target.value);
+                    if (!validation.valid && e.target.value.length >= 10) {
+                        showValidationError('numero', validation.message);
+                    } else {
+                        hideValidationError('numero');
+                        if (validation.valid) {
+                            e.target.value = formatPhoneDisplay(validation.formatted);
+                        }
+                    }
+                });
+            }
+
+            [nombreInput, nombreNegocioInput].forEach(input => {
+                if (input) {
+                    input.addEventListener('input', function(e) {
+                        const validation = validateName(e.target.value);
+                        const fieldId = input.id === 'nombre' ? 'nombre' : 'negocio';
+                        if (!validation.valid && e.target.value.length >= SECURITY_CONFIG.MIN_NAME_LENGTH) {
+                            showValidationError(fieldId, validation.message);
+                        } else {
+                            hideValidationError(fieldId);
+                        }
+                    });
+                }
+            });
+
+            if (cuantoInput) {
+                cuantoInput.addEventListener('input', function(e) {
+                    const validation = validateAmount(e.target.value);
+                    if (!validation.valid && e.target.value.length > 0) {
+                        showValidationError('cuanto', validation.message);
+                    } else {
+                        hideValidationError('cuanto');
+                    }
+                });
+            }
+        });
+
+        receiptOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                receiptOptions.forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+                
+                receiptType = this.getAttribute('data-type');
+                
+                if (receiptType === 'normal') {
+                    normalFields.style.display = 'block';
+                    qrFields.style.display = 'none';
+                } else {
+                    normalFields.style.display = 'none';
+                    qrFields.style.display = 'block';
+                }
+            });
+        });
+
+        function mostrarCarga(mensaje = "Generando comprobante...") {
+            document.getElementById('loading').style.display = 'flex';
+            loadingText.textContent = mensaje;
+            statusMessage.textContent = "";
+        }
+
+        function ocultarCarga() {
+            document.getElementById('loading').style.display = 'none';
+            btnCancelar.style.display = 'none';
+        }
+        
+        function mostrarError(mensaje) {
+            const errorContainer = document.getElementById('error-container');
+            errorContainer.textContent = mensaje;
+            errorContainer.style.display = 'block';
+            
+            if (mensaje.includes('límite') || mensaje.includes('bloqueada')) {
+                document.getElementById('rate-limit-warning').style.display = 'block';
+            }
+            
+            setTimeout(() => {
+                errorContainer.style.display = 'none';
+            }, 8000);
+        }
+        
+        function ocultarError() {
+            document.getElementById('error-container').style.display = 'none';
+            document.getElementById('rate-limit-warning').style.display = 'none';
+        }
+        
+        function actualizarEstado(mensaje) {
+            statusMessage.textContent = mensaje;
+        }
+
+        async function generarComprobante(retry = false) {
+            const rateLimitCheck = checkRateLimit();
+            if (!rateLimitCheck.allowed) {
+                mostrarError(rateLimitCheck.message);
+                return false;
+            }
+
+            let datos = {};
+            const cuanto = document.getElementById('cuanto').value.trim();
+            
+            const amountValidation = validateAmount(cuanto);
+            if (!amountValidation.valid) {
+                mostrarError(amountValidation.message);
+                return false;
+            }
+
+            if (receiptType === 'normal') {
+                const nombre = document.getElementById('nombre').value.trim();
+                const numero = document.getElementById('numero').value.trim();
+                
+                const nameValidation = validateName(nombre);
+                if (!nameValidation.valid) {
+                    mostrarError(nameValidation.message);
+                    return false;
+                }
+                
+                const phoneValidation = validateColombianPhone(numero);
+                if (!phoneValidation.valid) {
+                    mostrarError(phoneValidation.message);
+                    return false;
+                }
+                
+                datos = { 
+                    tipo: 'normal',
+                    nombre: nameValidation.sanitized,
+                    numero: phoneValidation.formatted,
+                    cuanto: amountValidation.amount
+                };
+            } else {
+                const nombreNegocio = document.getElementById('nombre-negocio').value.trim();
+                
+                const businessNameValidation = validateName(nombreNegocio);
+                if (!businessNameValidation.valid) {
+                    mostrarError(businessNameValidation.message);
+                    return false;
+                }
+                
+                datos = { 
+                    tipo: 'qr',
+                    nombre: businessNameValidation.sanitized,
+                    cuanto: amountValidation.amount
+                };
+            }
+            
+            try {
+                if (retry) {
+                    actualizarEstado(`Reintentando... (${currentRetry}/${MAX_RETRIES})`);
+                } else {
+                    mostrarCarga();
+                    currentRetry = 0;
+                }
+                
+                abortController = new AbortController();
+                btnCancelar.style.display = 'block';
+                
+                const timeoutId = setTimeout(() => {
+                    if (abortController) {
+                        abortController.abort();
+                    }
+                }, REQUEST_TIMEOUT);
+                
+                try {
+                    console.log(`Enviando datos a: ${API_URL}/api/generar-comprobante`);
+                    console.log('Datos validados:', { ...datos, cuanto: `$${datos.cuanto}` });
+                    
+                    const response = await fetch(`${API_URL}/api/generar-comprobante`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(datos),
+                        signal: abortController.signal,
+                        mode: 'cors'
+                    });
+                    
+                    clearTimeout(timeoutId);
+                    
+                    if (!response.ok) {
+                        console.error("Respuesta no OK:", response.status, response.statusText);
+                        
+                        if (response.status === 429) {
+                            throw new Error('Demasiadas solicitudes. Espera un momento e intenta de nuevo.');
+                        }
+                        if (response.status >= 500) {
+                            throw new Error('Error del servidor. Intenta de nuevo en unos momentos.');
+                        }
+                        if (response.status === 400) {
+                            throw new Error('Datos inválidos. Verifica la información ingresada.');
+                        }
+                        if (response.status === 422) {
+                            const errorData = await response.json();
+                            throw new Error('Error de validación: ' + (errorData.detail || 'Datos inválidos'));
+                        }
+                        
+                        if (response.headers.get("content-type")?.includes("application/json")) {
+                            const errorData = await response.json();
+                            throw new Error(errorData.detail || 'Error en el servidor');
+                        } else {
+                            throw new Error(`Error HTTP: ${response.status}`);
+                        }
+                    }
+                    
+                    const data = await response.json();
+                    console.log("Datos recibidos:", data);
+                    
+                    if (!data.imagen_url || !data.movimientos_url || !data.referencia) {
+                        throw new Error('Respuesta incompleta del servidor');
+                    }
+                    
+                    window.location.href = `comprobante.html?imagen=${encodeURIComponent(API_URL + data.imagen_url)}&movimientos=${encodeURIComponent(API_URL + data.movimientos_url)}&referencia=${data.referencia}`;
+                    
+                    return true;
+                } catch (fetchError) {
+                    clearTimeout(timeoutId);
+                    console.error("Error en fetch:", fetchError);
+                    
+                    if (fetchError.name === 'AbortError') {
+                        throw new Error('La solicitud tardó demasiado tiempo. Verifica tu conexión a internet.');
+                    }
+                    
+                    throw fetchError;
+                }
+            } catch (error) {
+                console.error('Error completo:', error);
+                
+                if (currentRetry < MAX_RETRIES) {
+                    currentRetry++;
+                    actualizarEstado(`Error: ${error.message}. Reintentando en ${RETRY_DELAY/1000} segundos...`);
+                    
+                    await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+                    return await generarComprobante(true);
+                } else {
+                    mostrarError(`No se pudo conectar al servidor. ${error.message || 'Verifica tu conexión a internet e intenta nuevamente.'}`);
+                    return false;
+                }
+            } finally {
+                if (!retry) {
+                    ocultarCarga();
+                    abortController = null;
+                }
+            }
+        }
+
+        btnSigue.addEventListener('click', async function(e) {
+            e.preventDefault();
+            ocultarError();
+            
+            btnSigue.disabled = true;
+            
+            try {
+                await generarComprobante();
+            } finally {
+                setTimeout(() => {
+                    btnSigue.disabled = false;
+                }, 2000);
+            }
+        });
+        
+        btnCancelar.addEventListener('click', function() {
+            if (abortController) {
+                abortController.abort();
+                abortController = null;
+            }
+            ocultarCarga();
+            mostrarError('Operación cancelada por el usuario.');
+        });
+
+        document.querySelector('.back-button')?.addEventListener('click', function() {
+            history.back();
+        });
+
+        window.addEventListener('load', function() {
+            console.log(`App inicializada. API URL: ${API_URL}`);
+            console.log('Validaciones de seguridad activas:', {
+                maxAmount: SECURITY_CONFIG.MAX_AMOUNT,
+                minNameLength: SECURITY_CONFIG.MIN_NAME_LENGTH,
+                rateLimit: `${SECURITY_CONFIG.MAX_REQUESTS_PER_MINUTE} req/min`
+            });
+        });
+    </script>
+</body>
+</html>
