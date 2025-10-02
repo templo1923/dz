@@ -1,73 +1,55 @@
-// 1. Importar las librerías que instalamos
 const express = require('express');
 const cors = require('cors');
 const Jimp = require('jimp');
 const path = require('path');
 
-// 2. Inicializar la aplicación de Express
+// Esta línea es necesaria para que Vercel sirva la API correctamente
 const app = express();
-const PORT = process.env.PORT || 3000; // El puerto donde correrá la API
 
-// 3. Configurar los Middlewares
-// CORS: Para permitir peticiones desde cualquier origen (tu frontend)
 app.use(cors());
-// Para que Express entienda JSON en el cuerpo de las peticiones POST
 app.use(express.json());
-// Para servir archivos estáticos (las imágenes generadas)
-// Todo lo que esté en la carpeta 'public' será accesible desde la URL '/static'
-app.use('/static', express.static(path.join(__dirname, 'public')));
 
+// La API ahora es la función que se exporta
+module.exports = async (req, res) => {
+    if (req.method !== 'POST') {
+        return res.status(405).json({ success: false, message: 'Método no permitido' });
+    }
 
-// 4. Crear el Endpoint para generar el comprobante
-app.post('/api/generar-comprobante', async (req, res) => {
     try {
-        // Obtenemos los datos que envía el frontend
         const { nombre, numero, cuanto, tipo } = req.body;
-
-        // Generamos un número de referencia único (puedes mejorarlo)
         const referencia = `M${Math.floor(Math.random() * 9000000) + 1000000}`;
 
-        // --- Lógica para crear la imagen del Comprobante ---
-        const plantillaComprobante = path.join(process.cwd(), 'public', 'templates', 'comprobante_base.png');
-        const font = await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK); // Cargamos una fuente
+        // --- Lógica para COMPROBANTE ---
+        const plantillaComprobantePath = path.join(process.cwd(), 'public', 'templates', 'comprobante_base.png');
+        const font = await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK);
+        const image = await Jimp.read(plantillaComprobantePath);
         
-        const image = await Jimp.read(plantillaComprobante);
+        // AJUSTA ESTAS COORDENADAS (X, Y) PARA TU PLANTILLA
+        image.print(font, 150, 300, nombre);
+        image.print(font, 150, 400, `$ ${cuanto}`);
 
-        // Escribimos los datos sobre la imagen. 
-        // ¡Tendrás que ajustar las coordenadas (X, Y) para que coincidan con tu plantilla!
-        image.print(font, 150, 300, nombre); // Escribe el nombre en la posición (150, 300)
-        image.print(font, 150, 400, `$ ${cuanto}`); // Escribe el monto
+        // Convertir la imagen a Base64 en lugar de guardarla
+        const imagen_base64 = await image.getBase64Async(Jimp.MIME_PNG);
 
-        // Guardamos la nueva imagen
-        const rutaSalidaComprobante = `public/generated/comprobante_${referencia}.jpg`;
-        await image.writeAsync(rutaSalidaComprobante);
+        // --- Lógica para MOVIMIENTOS ---
+        const plantillaMovimientosPath = path.join(process.cwd(), 'public', 'templates', 'movimientos_base.png');
+        const movImage = await Jimp.read(plantillaMovimientosPath);
+        
+        // Aquí también podrías escribir texto si lo necesitas
+        // movImage.print(font, X, Y, "algún texto");
 
-        // --- Lógica para crear la imagen de Movimientos (similar a la anterior) ---
-        // (Aquí repetirías el proceso con la plantilla 'movimientos_base.png')
-        // Por ahora, solo usaremos una imagen de ejemplo
-        const rutaSalidaMovimientos = `public/generated/movimientos_${referencia}.png`;
-        const movImage = await Jimp.read(path.join(__dirname, 'templates', 'movimientos_base.png'));
-        await movImage.writeAsync(rutaSalidaMovimientos);
+        const movimientos_base64 = await movImage.getBase64Async(Jimp.MIME_PNG);
 
-
-        // 5. Enviar la respuesta al frontend
-        res.json({
+        // Enviar la respuesta con los datos de las imágenes en Base64
+        res.status(200).json({
             success: true,
             referencia: referencia,
-            // Devolvemos las URLs relativas que el frontend puede usar
-            imagen_url: `/static/generated/comprobante_${referencia}.jpg`,
-            movimientos_url: `/static/generated/movimientos_${referencia}.png`
+            imagen_base64: imagen_base64,
+            movimientos_base64: movimientos_base64
         });
 
     } catch (error) {
         console.error("Error generando el comprobante:", error);
-        res.status(500).json({ success: false, message: 'Error interno del servidor.' });
+        res.status(500).json({ success: false, message: 'Error interno del servidor.', error: error.message });
     }
-});
-
-
-// 6. Iniciar el servidor
-app.listen(PORT, () => {
-    console.log(`Servidor corriendo en http://localhost:${PORT}`);
-});
-
+};
