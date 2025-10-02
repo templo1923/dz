@@ -341,7 +341,7 @@
     </div>
 
     <script>
-        const API_URL = "https://nequidz.mooo.com";
+        const API_URL = "";
         const MAX_RETRIES = 2;
         const RETRY_DELAY = 3000;
         const REQUEST_TIMEOUT = 30000;
@@ -654,7 +654,7 @@
                     console.log(`Enviando datos a: ${API_URL}/api/generar-comprobante`);
                     console.log('Datos validados:', { ...datos, cuanto: `$${datos.cuanto}` });
                     
-                    const response = await fetch(`${API_URL}/api/generar-comprobante`, {
+                    const response = await fetch(`/api/generar-comprobante`, {
                         method: 'POST',
                         headers: { 
                             'Content-Type': 'application/json'
